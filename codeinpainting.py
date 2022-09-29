@@ -28,3 +28,12 @@ def grady(im):
     gy=0*imt
     gy[:-1,:]=imt[1:,:]-imt[:-1,:]
     return gy
+
+def confidence(p):
+    return 0
+    
+def data(p):
+    return 0
+
+def priority(p):
+    return confidence(p)*data(p)
