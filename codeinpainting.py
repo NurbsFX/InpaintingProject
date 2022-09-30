@@ -20,6 +20,9 @@ def patch(size, position):
     l.append(size, position)
     return l
 
+def deltaOmega(im, omega):
+    return 
+
 def gradx(im):
     "renvoie le gradient dans la direction x"
     imt=np.float32(im)
@@ -38,7 +41,7 @@ def confidence(p):
     return 0
     
 def data(p):
-    return 0
+    return 1
 
 def priority(p):
     return confidence(p)*data(p)
