@@ -20,7 +20,7 @@ def patch(size, position, IM):
     P = np.zero(size,size)
     for i in range (size) :
                     for j in range (size) :
-                        P[i][j]= IM[position[0]-int(size)/2+i][position[1]-int(size)/2+j]
+                        P[i][j]= IM[position[0]-int(size/2)+i][position[1]-int(size/2)+j]
     return (P,position)
 
 def deltaOmega(im, omega):
