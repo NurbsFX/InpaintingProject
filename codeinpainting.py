@@ -15,6 +15,19 @@ from skimage import io as io
 
 #%% SECTION 2 Fonctions utiles
 
+# Renvoie le mask "contraire" d'un mask entré en argument
+def oppositemask(mask):
+    nblignes, nbcolonnes = mask.shape
+    
+    newmask = np.zero(nblignes,nbcolonnes)
+    
+    for i in range(nblignes):
+        for j in range(nbcolonnes):
+            newmask[i][j] = 1 - mask[i][j]
+    
+    return newmask
+            
+
 def patch(size, position, IM):
    #IM est l'image dont on a enlevé oméga
     P = np.zero(size,size)
