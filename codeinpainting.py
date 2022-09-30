@@ -10,10 +10,15 @@ Created on Thu Sep 29 15:04:32 2022
 
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage import io as skio
+from skimage import io as io
 
 
 #%% SECTION 2 Fonctions utiles
+
+def patch(size, position):
+    l = []
+    l.append(size, position)
+    return l
 
 def gradx(im):
     "renvoie le gradient dans la direction x"
