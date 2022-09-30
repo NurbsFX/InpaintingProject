@@ -6,16 +6,27 @@ Created on Thu Sep 29 15:04:32 2022
 @author: brunokalfa
 """
 
-#%% SECTION 1 inclusion de packages externes 
+#%% SECTION 1 : Inclusion de packages externes 
 
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as io
+from scipy import ndimage
+
+#%% SECTION 2 : génération de δΩ
+
+def getdeltaomega(omega):
+    a,b = omega.shape
+    deltaomega = omega - ndimage.binary_erosion(omega).astype(omega.dtype)
+    return deltaomega 
 
 
-#%% SECTION 2 Fonctions utiles
+#%% SECTION 3 : Fonctions utiles
 
-# Renvoie le mask "contraire" d'un mask entré en argument
+
+
+
+# Renvoie le mask complémentaire du mask entré en argument
 def oppositemask(mask):
     nblignes, nbcolonnes = mask.shape
     
@@ -31,9 +42,11 @@ def oppositemask(mask):
 def patch(size, position, IM):
    #IM est l'image dont on a enlevé oméga
     P = np.zero(size,size)
+    
     for i in range (size) :
                     for j in range (size) :
                         P[i][j]= IM[position[0]-int(size/2)+i][position[1]-int(size/2)+j]
+                        
     return (P,position)
 
 def deltaOmega(im, omega):
