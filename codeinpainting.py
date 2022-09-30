@@ -15,10 +15,13 @@ from skimage import io as io
 
 #%% SECTION 2 Fonctions utiles
 
-def patch(size, position):
-    l = []
-    l.append(size, position)
-    return l
+def patch(size, position, IM):
+   #IM est l'image dont on a enlevé oméga
+    P = np.zero(size,size)
+    for i in range (size) :
+                    for j in range (size) :
+                        P[i][j]= IM[position[0]-int(size)/2+i][position[1]-int(size)/2+j]
+    return (P,position)
 
 def gradx(im):
     "renvoie le gradient dans la direction x"
