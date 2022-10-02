@@ -10,13 +10,20 @@ Created on Thu Sep 29 15:04:32 2022
 
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage import io as io
+from skimage import io as skio
 from scipy import ndimage
 
 #%% SECTION 2 : génération de δΩ
+im = skio.imread('lena.tif')
+height, width = im.shape
+
+def getomega(startheight, endheight, startwidth, endwidth):
+    omega = np.zeros((height,width), dtype=int)
+    omega[startheight:endheight, startwidth:endwidth] = 1
+    return omega
+    
 
 def getdeltaomega(omega):
-    a,b = omega.shape
     deltaomega = omega - ndimage.binary_erosion(omega).astype(omega.dtype)
     return deltaomega 
 
