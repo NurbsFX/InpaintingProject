@@ -45,6 +45,8 @@ def oppositeMask(mask):
 omega0 = getOmega(100, 150, 150)
 currentOmega = getOmega(100, 150, 150)
 currentOmegaBarre = oppositeMask(currentOmega)
+currentDeltaOmega = getDeltaOmega(currentOmega)
+
 CM =oppositeMask(omega0)
 
 # Taille du patch
@@ -58,6 +60,9 @@ def isInCurrentOmegaBarre(p):
     ip = p[0], jp = p[1]
     return (currentOmegaBarre[ip][jp]==1)
 
+def isInCurrentDeltaOmega(p):
+    ip = p[0], jp = p[1]
+    return (currentDeltaOmega[ip][jp]==1)
 
 
 #%% SECTION 4 : Fonctions utiles
@@ -93,6 +98,7 @@ def grady(im):
 #%% SECTION 5 : Algorithme global
 
 def calculConfidence(p):
+    assert isInCurrentDeltaOmega(p)
     ip = p[0], jp = p[1]
     for i in range (size):
         for j in range (size) :
@@ -107,4 +113,7 @@ def data(p):
 def priority(p):
     ip = p[0], jp = p[1]
     return CM[ip][jp]*data(p)
+
+def inpainting(im, omega):
+    return 0
 
