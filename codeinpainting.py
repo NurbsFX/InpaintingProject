@@ -30,8 +30,7 @@ def getDeltaOmega(omega):
 # Renvoie le mask complémentaire du mask entré en argument
 def oppositeMask(mask):
     nblignes, nbcolonnes = mask.shape
-    
-    newmask = np.zero(nblignes,nbcolonnes)
+    newmask = np.zeros((nblignes,nbcolonnes), dtype =int)
     
     for i in range(nblignes):
         for j in range(nbcolonnes):
@@ -44,6 +43,7 @@ def oppositeMask(mask):
 
 omega0 = getOmega(100, 150, 150)
 currentOmega = getOmega(100, 150, 150)
+currentOmega
 currentOmegaBarre = oppositeMask(currentOmega)
 currentDeltaOmega = getDeltaOmega(currentOmega)
 
