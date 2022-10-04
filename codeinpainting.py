@@ -65,7 +65,7 @@ def isInCurrentDeltaOmega(p):
     return (currentDeltaOmega[ip][jp]==1)
 
 
-#%% SECTION 4 : Fonctions utiles
+#%% SECTION 4 : Fonctions utiles pour l'algorithme
 
 def imSansOmega(im, currentOmega):
     return np.multiply(im, currentOmega)
