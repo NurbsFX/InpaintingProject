@@ -57,19 +57,19 @@ PM = np.zeros((height, width), dtype = int)
 size = 7
 
 def isInOmega(p):
-    ip = p[0], jp = p[1]
+    ip = p[0] ; jp = p[1]
     return (omega0[ip][jp]==1)
 
 def isInCurrentOmega(p):
-    ip = p[0], jp = p[1]
+    ip = p[0] ; jp = p[1]
     return (currentOmega[ip][jp]==1)
 
 def isInCurrentOmegaBarre(p):
-    ip = p[0], jp = p[1]
+    ip = p[0] ; jp = p[1]
     return (currentOmegaBarre[ip][jp]==1)
 
 def isInCurrentDeltaOmega(p):
-    ip = p[0], jp = p[1]
+    ip = p[0] ; jp = p[1]
     return (currentDeltaOmega[ip][jp]==1)
 
 
@@ -80,7 +80,7 @@ def imSansOmega(im, currentOmega):
 
 def patch(position, im):
     im2 = imSansOmega(im, currentOmega)
-    P = np.zero(size,size)
+    P = np.zeros((size,size), dtype = int)
     
     for i in range (size) :
         for j in range (size) :
@@ -105,7 +105,7 @@ def grady(im):
 # Métrique de patch
 
 def maskFromPatch(p):
-    mask = np.zeros(size, size)
+    mask = np.zeros((size, size), dtype = int)
     
     for i in range(size):
         for j in range(size):
@@ -132,21 +132,24 @@ def distance(p, q):
 #%% SECTION 5 : Algorithme global
 
 def calculConfidence(p):
+    
     assert isInCurrentDeltaOmega(p)
-    ip = p[0], jp = p[1]
+    
+    ip = p[0] ; jp = p[1]
     for i in range (size):
         for j in range (size) :
             q = [p[0]-int(size/2)+i, p[1]-int(size/2)+j]
             if (isInCurrentOmegaBarre(p)):
                 CM[ip][jp] += CM[q[0]][q[1]]
     CM[ip][jp] = CM[ip][jp]/(size*size)
+    
     return CM[ip][jp]
     
 def dataTerm(p):
     return 1
 
 def priority(p):
-    ip = p[0], jp = p[1]
+    ip = p[0] ; jp = p[1]
     CM[ip][jp] = calculConfidence(p)
     PM[ip][jp] = CM[ip][jp]*dataTerm(p)
     return PM[ip][jp]
@@ -158,7 +161,7 @@ def inpainting(im, omega):
     while (not isOmegaEmpty(currentOmega)):
         
         nullMatrix = np.zeros((height,width), dtype =int)
-        if (deltaOmega==nullMatrix):
+        if ((deltaOmega == nullMatrix).all()):
             print("DeltaOmega est vide")
             return 0
         
@@ -223,4 +226,9 @@ def inpainting(im, omega):
         deltaOmega = getDeltaOmega(currentOmega)
     
     return 0
+
+inpainting(im, omega0)
+
+imgplot = plt.imshow(newim)
+plt.show()
 
