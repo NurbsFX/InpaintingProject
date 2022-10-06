@@ -38,7 +38,6 @@ def oppositeMask(mask):
     
     return newmask
 
-
 #%% SECTION 3 : Variables globales, initialisation
 
 omega0 = getOmega(100, 150, 150)
@@ -47,7 +46,8 @@ currentOmega
 currentOmegaBarre = oppositeMask(currentOmega)
 currentDeltaOmega = getDeltaOmega(currentOmega)
 
-CM =oppositeMask(omega0)
+CM = oppositeMask(omega0)
+PM = np.zeros((height, width), dtype = int)
 
 # Taille du patch
 size = 7
@@ -94,6 +94,7 @@ def grady(im):
     gy[:-1,:]=imt[1:,:]-imt[:-1,:]
     return gy
 
+# Métrique de patch
 
 #%% SECTION 5 : Algorithme global
 
@@ -107,13 +108,36 @@ def calculConfidence(p):
                 CM[ip][jp] += CM[q[0]][q[1]]
     return CM[ip][jp]/(size*size)
     
-def data(p):
+def dataTerm(p):
     return 1
 
 def priority(p):
     ip = p[0], jp = p[1]
-    return CM[ip][jp]*data(p)
+    CM[ip][jp] = calculConfidence(p)
+    PM[ip][jp]=CM[ip][jp]*dataTerm(p)
+    return PM[ip][jp]
 
 def inpainting(im, omega):
+    deltaOmega = getDeltaOmega(omega) 
+    
+    nullMatrix = np.zeros((height,width), dtype =int)
+    if (deltaOmega==nullMatrix):
+        print("DeltaOmega est vide")
+        return 0
+    
+    priorityMax = 0
+    pMax = [-1,-1]
+    
+    for i in range(height):
+        for j in range(width):
+            p = [i,j]
+            if (isInCurrentDeltaOmega(p)):
+                pValue = priority(p)
+                if (pValue > priorityMax):
+                    priorityMax = pValue
+                    pMax = p
+    
+    
+    
     return 0
 
