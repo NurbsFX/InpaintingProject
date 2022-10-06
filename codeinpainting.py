@@ -16,6 +16,7 @@ from scipy import ndimage
 #%% SECTION 2 : génération de δΩ
 
 im = skio.imread('lena.tif')
+newim = im
 height, width = im.shape
 
 def getOmega(startheight, endheight, endwidth):
@@ -38,6 +39,9 @@ def oppositeMask(mask):
     
     return newmask
 
+def isOmegaEmpty(omega):
+    return (omega.sum() == 0)
+
 #%% SECTION 3 : Variables globales, initialisation
 
 omega0 = getOmega(100, 150, 150)
@@ -51,6 +55,10 @@ PM = np.zeros((height, width), dtype = int)
 
 # Taille du patch
 size = 7
+
+def isInOmega(p):
+    ip = p[0], jp = p[1]
+    return (omega0[ip][jp]==1)
 
 def isInCurrentOmega(p):
     ip = p[0], jp = p[1]
@@ -96,6 +104,31 @@ def grady(im):
 
 # Métrique de patch
 
+def maskFromPatch(p):
+    mask = np.zeros(size, size)
+    
+    for i in range(size):
+        for j in range(size):
+            iabs = p[0]-int(size/2)+i ; jabs = p[1]-int(size/2)+j
+            pabs = [iabs, jabs]
+            if (isInCurrentOmega(pabs)== False):
+                mask[i][j]=1
+                
+    return mask
+
+
+def distance(p, q):
+    
+    maskP = maskFromPatch(p)
+    
+    patchP = patch(p, im) ; patchQ = patch(q, im)
+    
+    d = np.multiply(np.multiply(patchP[0]-patchQ[0],patchP[0]-patchQ[0]),maskP)
+    s = d.sum()
+    
+    return s
+
+
 #%% SECTION 5 : Algorithme global
 
 def calculConfidence(p):
@@ -106,7 +139,8 @@ def calculConfidence(p):
             q = [p[0]-int(size/2)+i, p[1]-int(size/2)+j]
             if (isInCurrentOmegaBarre(p)):
                 CM[ip][jp] += CM[q[0]][q[1]]
-    return CM[ip][jp]/(size*size)
+    CM[ip][jp] = CM[ip][jp]/(size*size)
+    return CM[ip][jp]
     
 def dataTerm(p):
     return 1
@@ -114,30 +148,79 @@ def dataTerm(p):
 def priority(p):
     ip = p[0], jp = p[1]
     CM[ip][jp] = calculConfidence(p)
-    PM[ip][jp]=CM[ip][jp]*dataTerm(p)
+    PM[ip][jp] = CM[ip][jp]*dataTerm(p)
     return PM[ip][jp]
 
 def inpainting(im, omega):
-    deltaOmega = getDeltaOmega(omega) 
     
-    nullMatrix = np.zeros((height,width), dtype =int)
-    if (deltaOmega==nullMatrix):
-        print("DeltaOmega est vide")
-        return 0
+    deltaOmega = getDeltaOmega(omega0) 
     
-    priorityMax = 0
-    pMax = [-1,-1]
-    
-    for i in range(height):
-        for j in range(width):
-            p = [i,j]
-            if (isInCurrentDeltaOmega(p)):
-                pValue = priority(p)
-                if (pValue > priorityMax):
-                    priorityMax = pValue
-                    pMax = p
-    
-    
+    while (not isOmegaEmpty(currentOmega)):
+        
+        nullMatrix = np.zeros((height,width), dtype =int)
+        if (deltaOmega==nullMatrix):
+            print("DeltaOmega est vide")
+            return 0
+        
+        # On calcule le patch de priorité Max
+        
+        priorityMax = 0
+        pMax = [-1,-1]
+        
+        for i in range(height):
+            for j in range(width):
+                p = [i,j]
+                if (isInCurrentDeltaOmega(p)):
+                    pValue = priority(p)
+                    if (pValue > priorityMax):
+                        priorityMax = pValue
+                        pMax = p
+        
+        # On vérifie que patchQ n'a aucun pixel dans Omega
+        
+        dMin = 100000000
+        qExamplar = [-1,-1]
+        
+        for i in range(height):
+            for j in range(width):
+                q = [i,j] ; boo = True
+                for k in range(size):
+                    for l in range(size):
+                        x = q[0]-int(size/2)+i ; y = q[1]-int(size/2)+j
+                        if (isInOmega([x,y])):
+                            boo = False
+                if (boo):
+                    d = distance(pMax, q)
+                    if d < dMin:
+                        dMin = d
+                        qExamplar = q
+                        
+        # On copie dans patchP les éléments de patchQ 
+        
+        for i in range(size):
+            for j in range(size):
+                x = p[0]-int(size/2)+i ; y = p[1]-int(size/2)+j
+                if (isInCurrentOmega([x,y])):
+                    newim[x][y]=patch(qExamplar)[0][i][j]
+        
+        # On met à jour la confidence
+        
+        for i in range(size):
+            for j in range(size):
+                x = p[0]-int(size/2)+i ; y = p[1]-int(size/2)+j
+                if (isInCurrentOmega([x,y])):
+                    calculConfidence([x,y])
+                    
+        # On met à jour currentOmega
+        
+        for i in range(size):
+            for j in range(size):
+                x = p[0]-int(size/2)+i ; y = p[1]-int(size/2)+j
+                currentOmega[x][y] = 0 ;
+                
+        # On met à jour deltaOmega 
+        
+        deltaOmega = getDeltaOmega(currentOmega)
     
     return 0
 
