@@ -218,7 +218,7 @@ def inpainting(im, omega):
                 q = [i,j] ; boo = True
                 for k in range(size):
                     for l in range(size):
-                        x = q[0]-int(size/2)+i ; y = q[1]-int(size/2)+j
+                        x = q[0]-int(size/2)+k ; y = q[1]-int(size/2)+l
                         if (isInOmega([x,y])):
                             boo = False
          
