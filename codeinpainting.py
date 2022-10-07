@@ -213,8 +213,8 @@ def inpainting(im, omega):
         dMin = 100000000
         qExamplar = [-1,-1]
         
-        for i in range(height):
-            for j in range(width):
+        for i in range(int(size/2), height - int(size/2)):
+            for j in range(int(size/2), width - int(size/2)):
                 q = [i,j] ; boo = True
                 for k in range(size):
                     for l in range(size):
