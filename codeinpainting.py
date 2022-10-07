@@ -66,6 +66,7 @@ PM = np.zeros((height, width), dtype = int)
 
 # Taille du patch
 
+# A MODIFIER
 size = 7
 
 
@@ -98,10 +99,12 @@ def imSansOmega(im, currentOmega):
 
 def patch(position, im):
     im2 = imSansOmega(im, currentOmega)
-    P = np.zeros((size,size), dtype = int)
+    P = np.zeros((size,size), dtype = float)
     
-    for i in range (size) :
-        for j in range (size) :
+    #P=im2[(position[0]-halfpatchsize):(position[0]+halfpatchsize),(position[1]-halfpatchsize):(position[1]+halfpatchsize)]
+    
+    for i in range (size):
+        for j in range (size):
             P[i][j]= im2[position[0]-int(size/2)+i][position[1]-int(size/2)+j]
                         
     return (P,position)
