@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
 from scipy import ndimage
+import pdb
 
 #%% SECTION 2 : génération de Ω et δΩ
 
@@ -51,18 +52,19 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(100, 150, 150)
-currentOmega = getOmega(100, 150, 150)
+omega0 = getOmega(20, 50, 50)
+currentOmega = getOmega(20, 50, 50)
 currentOmegaBarre = oppositeMask(currentOmega)
 currentDeltaOmega = getDeltaOmega(currentOmega)
 
+
 # CM est la matrice des confidence
 
-CM = oppositeMask(omega0)
+CM = oppositeMask(omega0).astype(float)
 
 # PM est la matrice des priorités 
 
-PM = np.zeros((height, width), dtype = int)
+PM = np.zeros((height, width), dtype = float)
 
 # Taille du patch
 
@@ -159,15 +161,16 @@ def distance(p, q):
 
 def calculConfidence(p):
     
-    assert isInCurrentDeltaOmega(p)
+    print("p: ",p)
+    assert isInCurrentOmega(p)
     
     ip = p[0] ; jp = p[1]
     for i in range (size):
         for j in range (size) :
             q = [p[0]-int(size/2)+i, p[1]-int(size/2)+j]
-            if (isInCurrentOmegaBarre(p)):
+            if (isInCurrentOmegaBarre(q)):
                 CM[ip][jp] += CM[q[0]][q[1]]
-    CM[ip][jp] = CM[ip][jp]/(size*size)
+    CM[ip][jp] = CM[ip][jp]/(float(size*size))
     
     return CM[ip][jp]
     
@@ -185,6 +188,7 @@ def inpainting(im, omega):
     # On définit δΩ à partir du Ω initial
     
     deltaOmega = getDeltaOmega(omega0) 
+    plt.imshow(deltaOmega),plt.show()
     
     # Tant que Ω ≠ ∅, on poursuit l'algorithme :
     
@@ -234,33 +238,40 @@ def inpainting(im, omega):
                         dMin = d
                         qExamplar = q
                         
-        # On copie dans les pixels qui sont dans de Ω et patchP l
+        # On copie dans les pixels qui sont dans Ω et patchP
         # la valeur des pixels associés dans patchQ 
         
         for i in range(size):
             for j in range(size):
-                x = p[0]-int(size/2)+i ; y = p[1]-int(size/2)+j
+                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+                #print("p0: ",pMax[0])
+                #print("p1 : ",pMax[1])
+                #print("x : ",x)
+                #print("y : ",y)
                 if (isInCurrentOmega([x,y])):
-                    newim[x][y]=patch(qExamplar)[0][i][j]
+                    newim[x][y]=patch(qExamplar,im)[0][i][j]
         
         # On met à jour la confidence
         
         for i in range(size):
             for j in range(size):
-                x = p[0]-int(size/2)+i ; y = p[1]-int(size/2)+j
+                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
                 if (isInCurrentOmega([x,y])):
+                    print("x : ",x)
+                    print("y : ",y)
                     calculConfidence([x,y])
                     
         # On met à jour currentOmega
         
         for i in range(size):
             for j in range(size):
-                x = p[0]-int(size/2)+i ; y = p[1]-int(size/2)+j
+                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
                 currentOmega[x][y] = 0 ;
                 
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
+        print("Iter")
     
     return 0
 
