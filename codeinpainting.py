@@ -16,7 +16,7 @@ import pdb
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('lena128.tif')
+im = skio.imread('pyramide128.tif')
 #resized_image = im.resize((64,64))
 height, width = im.shape
 
@@ -52,7 +52,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(30, 70, 70)
+omega0 = getOmega(50, 80, 80)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -322,6 +322,8 @@ def inpainting(im, omega):
         compteur +=1
     
     imgplot = plt.imshow(newim), plt.title('Image modifiée avec un pacth de taille {}'.format(patchSize))
+    plt.show()
+    imgplot = plt.imshow(im), plt.title('Image originale')
     plt.show()
     return 0
 
