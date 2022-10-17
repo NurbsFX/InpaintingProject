@@ -69,7 +69,8 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-size = 5
+patchSize = 5
+halfPatchSize = int(patchSize/2)
 
 
 #%% SECTION 4 : Fonctions utiles pour l'algorithme
@@ -101,13 +102,13 @@ def imSansOmega(im, currentOmega):
 
 def patch(position, im, currentOmega):
     im2 = imSansOmega(im, currentOmega)
-    P = np.zeros((size,size), dtype = float)
+    P = np.zeros((patchSize,patchSize), dtype = float)
     
     #P=im2[(position[0]-halfpatchsize):(position[0]+halfpatchsize),(position[1]-halfpatchsize):(position[1]+halfpatchsize)]
     
-    for i in range (size):
-        for j in range (size):
-            P[i][j]= im2[position[0]-int(size/2)+i][position[1]-int(size/2)+j]
+    for i in range (patchSize):
+        for j in range (patchSize):
+            P[i][j]= im2[position[0]-halfPatchSize+i][position[1]-halfPatchSize+j]
                         
     return (P,position)
 
@@ -132,11 +133,11 @@ def grady(im):
 # On définit ici un masque associé à un patch de position p = [i,j]
 
 def maskFromPatch(p, omega):
-    mask = np.zeros((size, size), dtype = float)
+    mask = np.zeros((patchSize, patchSize), dtype = float)
     
-    for i in range(size):
-        for j in range(size):
-            iabs = p[0]-int(size/2)+i ; jabs = p[1]-int(size/2)+j
+    for i in range(patchSize):
+        for j in range(patchSize):
+            iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
             pabs = [iabs, jabs]
             if (isInCurrentOmega(pabs, omega)== False):
                 mask[i][j]=1
@@ -168,12 +169,12 @@ def calculConfidence(p, omega):
     omegaBarre = oppositeMask(omega)
     
     ip = p[0] ; jp = p[1]
-    for i in range (size):
-        for j in range (size) :
-            q = [p[0]-int(size/2)+i, p[1]-int(size/2)+j]
+    for i in range (patchSize):
+        for j in range (patchSize) :
+            q = [p[0]-halfPatchSize+i, p[1]-halfPatchSize+j]
             if (isInCurrentOmegaBarre(q, omegaBarre)):
                 CM[ip][jp] += CM[q[0]][q[1]]
-    CM[ip][jp] = CM[ip][jp]/(float(size*size))
+    CM[ip][jp] = CM[ip][jp]/(float(patchSize*patchSize))
     
     return CM[ip][jp]
     
@@ -231,12 +232,12 @@ def inpainting(im, omega):
         dMin = 100000000
         qExamplar = [-1,-1]
         
-        for i in range(int(size/2), height - int(size/2)):
-            for j in range(int(size/2), width - int(size/2)):
+        for i in range(halfPatchSize, height - halfPatchSize):
+            for j in range(halfPatchSize, width - halfPatchSize):
                 q = [i,j] ; boo = True
-                for k in range(size):
-                    for l in range(size):
-                        x = q[0]-int(size/2)+k ; y = q[1]-int(size/2)+l
+                for k in range(patchSize):
+                    for l in range(patchSize):
+                        x = q[0]-halfPatchSize+k ; y = q[1]-halfPatchSize+l
                         if (isInOmega([x,y],omega)):
                             boo = False
          
@@ -259,9 +260,9 @@ def inpainting(im, omega):
         print("Value :", im[qExamplar[0],qExamplar[1]])
         
         
-        for i in range(size):
-            for j in range(size):
-                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+        for i in range(patchSize):
+            for j in range(patchSize):
+                x = pMax[0]-halfPatchSize+i ; y = pMax[1]-halfPatchSize+j
                 #print("p0: ",pMax[0])
                 #print("p1 : ",pMax[1])
                 #print("x : ",x)
@@ -274,9 +275,9 @@ def inpainting(im, omega):
         
         # On met à jour la confidence
         
-        for i in range(size):
-            for j in range(size):
-                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+        for i in range(patchSize):
+            for j in range(patchSize):
+                x = pMax[0]-halfPatchSize+i ; y = pMax[1]-halfPatchSize+j
                 if (isInCurrentOmega([x,y], currentOmega)):
                     #print("x : ",x)
                     #print("y : ",y)
@@ -284,9 +285,9 @@ def inpainting(im, omega):
                     
         # On met à jour currentOmega
         
-        for i in range(size):
-            for j in range(size):
-                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+        for i in range(patchSize):
+            for j in range(patchSize):
+                x = pMax[0]-halfPatchSize+i ; y = pMax[1]-halfPatchSize+j
                 currentOmega[x][y] = 0 ;
                 
         # On met à jour δΩ à la fin de la boucle
@@ -295,12 +296,12 @@ def inpainting(im, omega):
         #plt.imshow(newim), plt.title("Image en construction"), plt.show()
         print("Iter")
     
-    imgplot = plt.imshow(newim)
+    imgplot = plt.imshow(newim), plt.title("lena modifiée")
     plt.show()
     return 0
 
 inpainting(im, omega0)
 
-imgplot = plt.imshow(newim)
+#imgplot = plt.imshow(newim)
 plt.show()
 
