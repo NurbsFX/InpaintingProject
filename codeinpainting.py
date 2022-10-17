@@ -17,7 +17,7 @@ import pdb
 #%% SECTION 2 : génération de Ω et δΩ
 
 im = skio.imread('lena.tif')
-#resized_image = im.resize((64,64))
+#repatchsized_image = im.repatchsize((64,64))
 height, width = im.shape
 
 # Génération de Ω
@@ -69,8 +69,8 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-size = 7
-
+patchsize = 7
+halfpatchsize = int(patchsize/2)
 
 #%% SECTION 4 : Fonctions utiles pour l'algorithme
 
@@ -101,13 +101,10 @@ def imSansOmega(im, currentOmega):
 
 def patch(position, im, currentOmega):
     im2 = imSansOmega(im, currentOmega)
-    P = np.zeros((size,size), dtype = float)
+    P = np.zeros((patchsize,patchsize), dtype = float)
     
-    #P=im2[(position[0]-halfpatchsize):(position[0]+halfpatchsize),(position[1]-halfpatchsize):(position[1]+halfpatchsize)]
-    
-    for i in range (size):
-        for j in range (size):
-            P[i][j]= im2[position[0]-int(size/2)+i][position[1]-int(size/2)+j]
+    P=im2[(position[0]-halfpatchsize):(position[0]+halfpatchsize),(position[1]-halfpatchsize):(position[1]+halfpatchsize)]
+
                         
     return (P,position)
 
@@ -132,16 +129,18 @@ def grady(im):
 # On définit ici un masque associé à un patch de position p = [i,j]
 
 def maskFromPatch(p, omega):
-    mask = np.zeros((size, size), dtype = float)
-    
-    for i in range(size):
-        for j in range(size):
-            iabs = p[0]-int(size/2)+i ; jabs = p[1]-int(size/2)+j
-            pabs = [iabs, jabs]
-            if (isInCurrentOmega(pabs, omega)== False):
-                mask[i][j]=1
+   
+    mask=im2[(p[1][0]-halfpatchsize):(p[1][0]+halfpatchsize),(p[1][1]-halfpatchsize):(p[1][1]+halfpatchsize)]
+   
+    maskf= np.multiply(mask, oppositeMask(currentOmega))
+    #for i in range(patchsize):
+        #for j in range(patchsize):
+            #iabs = p[0]-int(patchsize/2)+i ; jabs = p[1]-int(patchsize/2)+j
+            #pabs = [iabs, jabs]
+            #if (isInCurrentOmega(pabs, omega)== False):
+                #mask[i][j]=1
                 
-    return mask
+    return maskf
 
 # On calcule la distance entre deux patch définis par leurs position p et q 
 
@@ -168,12 +167,12 @@ def calculConfidence(p, omega):
     omegaBarre = oppositeMask(omega)
     
     ip = p[0] ; jp = p[1]
-    for i in range (size):
-        for j in range (size) :
-            q = [p[0]-int(size/2)+i, p[1]-int(size/2)+j]
+    for i in range (patchsize):
+        for j in range (patchsize) :
+            q = [p[0]-int(patchsize/2)+i, p[1]-int(patchsize/2)+j]
             if (isInCurrentOmegaBarre(q, omegaBarre)):
                 CM[ip][jp] += CM[q[0]][q[1]]
-    CM[ip][jp] = CM[ip][jp]/(float(size*size))
+    CM[ip][jp] = CM[ip][jp]/(float(patchsize*patchsize))
     
     return CM[ip][jp]
     
@@ -231,12 +230,12 @@ def inpainting(im, omega):
         dMin = 100000000
         qExamplar = [-1,-1]
         
-        for i in range(int(size/2), height - int(size/2)):
-            for j in range(int(size/2), width - int(size/2)):
+        for i in range(int(patchsize/2), height - int(patchsize/2)):
+            for j in range(int(patchsize/2), width - int(patchsize/2)):
                 q = [i,j] ; boo = True
-                for k in range(size):
-                    for l in range(size):
-                        x = q[0]-int(size/2)+k ; y = q[1]-int(size/2)+l
+                for k in range(patchsize):
+                    for l in range(patchsize):
+                        x = q[0]-int(patchsize/2)+k ; y = q[1]-int(patchsize/2)+l
                         if (isInOmega([x,y],omega)):
                             boo = False
          
@@ -259,9 +258,9 @@ def inpainting(im, omega):
         print("Value :", im[qExamplar[0],qExamplar[1]])
         
         
-        for i in range(size):
-            for j in range(size):
-                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+        for i in range(patchsize):
+            for j in range(patchsize):
+                x = pMax[0]-int(patchsize/2)+i ; y = pMax[1]-int(patchsize/2)+j
                 #print("p0: ",pMax[0])
                 #print("p1 : ",pMax[1])
                 #print("x : ",x)
@@ -274,9 +273,9 @@ def inpainting(im, omega):
         
         # On met à jour la confidence
         
-        for i in range(size):
-            for j in range(size):
-                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+        for i in range(patchsize):
+            for j in range(patchsize):
+                x = pMax[0]-int(patchsize/2)+i ; y = pMax[1]-int(patchsize/2)+j
                 if (isInCurrentOmega([x,y], currentOmega)):
                     #print("x : ",x)
                     #print("y : ",y)
@@ -284,9 +283,9 @@ def inpainting(im, omega):
                     
         # On met à jour currentOmega
         
-        for i in range(size):
-            for j in range(size):
-                x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
+        for i in range(patchsize):
+            for j in range(patchsize):
+                x = pMax[0]-int(patchsize/2)+i ; y = pMax[1]-int(patchsize/2)+j
                 currentOmega[x][y] = 0 ;
                 
         # On met à jour δΩ à la fin de la boucle
