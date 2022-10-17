@@ -17,6 +17,7 @@ import pdb
 #%% SECTION 2 : génération de Ω et δΩ
 
 im = skio.imread('lena.tif')
+#resized_image = im.resize((64,64))
 height, width = im.shape
 
 # Génération de Ω
@@ -51,7 +52,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(20, 50, 50)
+omega0 = getOmega(30, 40, 40)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -94,7 +95,7 @@ def isInCurrentDeltaOmega(p, currentDeltaOmega):
 # On construit une image privée de la partie Ω
 
 def imSansOmega(im, currentOmega):
-    return np.multiply(im, currentOmega)
+    return np.multiply(im, oppositeMask(currentOmega))
 
 # On calcule le patch associé à une position p = [i,j]
 
@@ -149,6 +150,8 @@ def distance(p, q, omega):
     maskP = maskFromPatch(p, omega)
     
     patchP = patch(p, im, omega) ; patchQ = patch(q, im, omega)
+    #print("patchP[0] :", patchP[0])
+    #print("patchQ[0] :", patchQ[0])
     
     d = np.multiply(np.multiply(patchP[0]-patchQ[0],patchP[0]-patchQ[0]),maskP)
     s = d.sum()
@@ -186,6 +189,8 @@ def priority(p, omega):
 def inpainting(im, omega):
     
     newim = im
+    plt.imshow(newim), plt.title("lena originale"), plt.show()
+    
     
     # On définit δΩ à partir du Ω initial
     
@@ -240,16 +245,18 @@ def inpainting(im, omega):
          
                 if (boo):
                     d = distance(pMax, q, currentOmega)
-                    print("d(p,q) :", d)
+                    #print("d(p,q) :", d)
                     if d < dMin:
                         dMin = d
+                        #print("dMin :", dMin)
                         qExamplar = q
-                        
+                        #print("qExamplar :", qExamplar)
+                   
         # On copie dans les pixels qui sont dans Ω et patchP
         # la valeur des pixels associés dans patchQ 
         
         print("qExamplar : ", qExamplar)
-        print("Value :", im[qExamplar[0],qExamplar[1]] )
+        print("Value :", im[qExamplar[0],qExamplar[1]])
         
         
         for i in range(size):
@@ -285,7 +292,7 @@ def inpainting(im, omega):
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
-        plt.imshow(currentOmega), plt.title("Ω"), plt.show()
+        #plt.imshow(newim), plt.title("Image en construction"), plt.show()
         print("Iter")
     
     imgplot = plt.imshow(newim)
