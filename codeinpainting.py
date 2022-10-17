@@ -16,7 +16,7 @@ import pdb
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('pyramide64.tif')
+im = skio.imread('lena128.tif')
 #resized_image = im.resize((64,64))
 height, width = im.shape
 
@@ -52,7 +52,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(40, 70, 70)
+omega0 = getOmega(30, 70, 70)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -102,15 +102,19 @@ def imSansOmega(im, currentOmega):
 
 def patch(position, im, currentOmega):
     #im2 = imSansOmega(im, currentOmega)
-    # P = np.zeros((patchSize,patchSize), dtype = float)
+    #Pboucle = np.zeros((patchSize,patchSize), dtype = float)
     
-    P=im[(position[0]-halfPatchSize):(position[0]+halfPatchSize+1),(position[1]-halfPatchSize):(position[1]+halfPatchSize+1)]
+    Pmatrice=im[(position[0]-halfPatchSize):(position[0]+halfPatchSize+1),(position[1]-halfPatchSize):(position[1]+halfPatchSize+1)]
+    Pmatrice = Pmatrice.astype('float64')
     
-    #for i in range (patchSize):
-    #    for j in range (patchSize):
-    #        P[i][j]= im2[position[0]-halfPatchSize+i][position[1]-halfPatchSize+j]
+    # for i in range (patchSize):
+    #     for j in range (patchSize):
+    #         Pboucle[i][j]= im2[position[0]-halfPatchSize+i][position[1]-halfPatchSize+j]
+            
+    #print("Matrice P obtenue avec boucle :",Pboucle)
+    #print("Matrice P obtenue avec matrices :",Pmatrice)
               
-    return (P,position)
+    return (Pmatrice,position)
 
 # On calcule le gradient
 
@@ -133,21 +137,21 @@ def grady(im):
 # On définit ici un masque associé à un patch de position p = [i,j]
 
 def maskFromPatch(p, omega, im):
-    #mask = np.zeros((patchSize, patchSize), dtype = float)
+    mask = np.zeros((patchSize, patchSize), dtype = float)
     
-    mask=im[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
-    oppositeMaskResized = oppositeMask(omega)[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+    #mask=im[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+    #oppositeMaskResized = oppositeMask(omega)[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
     
-    # for i in range(patchSize):
-    #     for j in range(patchSize):
-    #         iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
-    #         pabs = [iabs, jabs]
-    #         if (isInCurrentOmega(pabs, omega)== False):
-    #             mask[i][j]=1
+    for i in range(patchSize):
+        for j in range(patchSize):
+            iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
+            pabs = [iabs, jabs]
+            if (isInCurrentOmega(pabs, omega)== False):
+                mask[i][j]=1
     
-    maskf= np.multiply(mask, oppositeMaskResized)
+    #maskf= np.multiply(mask, oppositeMaskResized)
                 
-    return maskf
+    return mask
 
 # On calcule la distance entre deux patch définis par leurs position p et q 
 
@@ -259,12 +263,20 @@ def inpainting(im, omega):
                         #print("dMin :", dMin)
                         qExamplar = q
                         #print("qExamplar :", qExamplar)
+                        
+        QExamplar = np.zeros((height, width), dtype = float)
+        for i in range (patchSize):
+            for j in range (patchSize):
+                QExamplar[qExamplar[0]-halfPatchSize+i][qExamplar[1]-halfPatchSize+j]= 1
+                
+        #plt.imshow(QExamplar), plt.title("Emplacement du patch q à la boucle {}".format(compteur)), plt.show()
+        print("dMin : ", dMin)
+        print("qExamplar : ", qExamplar)
+        print("Value :", im[qExamplar[0],qExamplar[1]])
                    
         # On copie dans les pixels qui sont dans Ω et patchP
         # la valeur des pixels associés dans patchQ 
         
-        print("qExamplar : ", qExamplar)
-        print("Value :", im[qExamplar[0],qExamplar[1]])
         
         
         for i in range(patchSize):
@@ -302,7 +314,11 @@ def inpainting(im, omega):
         
         deltaOmega = getDeltaOmega(currentOmega)
         plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
-        print("Iter")
+        #plt.imshow(currentOmega), plt.title("Image après la boucle {}".format(compteur)), plt.show()
+
+        print(" ")
+        print("FIN DE LA BOUCLE {}".format(compteur))
+        print(" ")
         compteur +=1
     
     imgplot = plt.imshow(newim), plt.title('Image modifiée avec un pacth de taille {}'.format(patchSize))
