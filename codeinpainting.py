@@ -16,7 +16,7 @@ import pdb
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('lena.tif')
+im = skio.imread('pyramide64.tif')
 #resized_image = im.resize((64,64))
 height, width = im.shape
 
@@ -52,7 +52,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(30, 40, 40)
+omega0 = getOmega(40, 70, 70)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -69,7 +69,7 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-patchSize = 3
+patchSize = 7
 halfPatchSize = int(patchSize/2)
 
 
@@ -195,7 +195,7 @@ def priority(p, omega):
 def inpainting(im, omega):
     
     newim = im
-    plt.imshow(newim), plt.title("lena originale "), plt.show()
+    plt.imshow(newim), plt.title("Image originale "), plt.show()
     compteur = 1
     
     
@@ -301,11 +301,11 @@ def inpainting(im, omega):
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
-        plt.imshow(newim), plt.title("Image à la boucle {}".format(compteur)), plt.show()
+        plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
         print("Iter")
         compteur +=1
     
-    imgplot = plt.imshow(newim), plt.title('lena modifiée avec un pacth de taille {}'.format(patchSize))
+    imgplot = plt.imshow(newim), plt.title('Image modifiée avec un pacth de taille {}'.format(patchSize))
     plt.show()
     return 0
 
