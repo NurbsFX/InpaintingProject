@@ -101,15 +101,15 @@ def imSansOmega(im, currentOmega):
 # On calcule le patch associé à une position p = [i,j]
 
 def patch(position, im, currentOmega):
-    im2 = imSansOmega(im, currentOmega)
-    P = np.zeros((patchSize,patchSize), dtype = float)
+    #im2 = imSansOmega(im, currentOmega)
+    # P = np.zeros((patchSize,patchSize), dtype = float)
     
-    #P=im2[(position[0]-halfpatchsize):(position[0]+halfpatchsize),(position[1]-halfpatchsize):(position[1]+halfpatchsize)]
+    P=im[(position[0]-halfPatchSize):(position[0]+halfPatchSize+1),(position[1]-halfPatchSize):(position[1]+halfPatchSize+1)]
     
-    for i in range (patchSize):
-        for j in range (patchSize):
-            P[i][j]= im2[position[0]-halfPatchSize+i][position[1]-halfPatchSize+j]
-                        
+    #for i in range (patchSize):
+    #    for j in range (patchSize):
+    #        P[i][j]= im2[position[0]-halfPatchSize+i][position[1]-halfPatchSize+j]
+              
     return (P,position)
 
 # On calcule le gradient
@@ -132,23 +132,28 @@ def grady(im):
 
 # On définit ici un masque associé à un patch de position p = [i,j]
 
-def maskFromPatch(p, omega):
-    mask = np.zeros((patchSize, patchSize), dtype = float)
+def maskFromPatch(p, omega, im):
+    #mask = np.zeros((patchSize, patchSize), dtype = float)
     
-    for i in range(patchSize):
-        for j in range(patchSize):
-            iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
-            pabs = [iabs, jabs]
-            if (isInCurrentOmega(pabs, omega)== False):
-                mask[i][j]=1
+    mask=im[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+    oppositeMaskResized = oppositeMask(omega)[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+    
+    # for i in range(patchSize):
+    #     for j in range(patchSize):
+    #         iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
+    #         pabs = [iabs, jabs]
+    #         if (isInCurrentOmega(pabs, omega)== False):
+    #             mask[i][j]=1
+    
+    maskf= np.multiply(mask, oppositeMaskResized)
                 
-    return mask
+    return maskf
 
 # On calcule la distance entre deux patch définis par leurs position p et q 
 
-def distance(p, q, omega):
+def distance(p, q, omega, im):
     
-    maskP = maskFromPatch(p, omega)
+    maskP = maskFromPatch(p, omega, im)
     
     patchP = patch(p, im, omega) ; patchQ = patch(q, im, omega)
     #print("patchP[0] :", patchP[0])
@@ -245,7 +250,7 @@ def inpainting(im, omega):
         # on la compare à dMin                 
          
                 if (boo):
-                    d = distance(pMax, q, currentOmega)
+                    d = distance(pMax, q, currentOmega, newim)
                     #print("d(p,q) :", d)
                     if d < dMin:
                         dMin = d
@@ -268,6 +273,7 @@ def inpainting(im, omega):
                 #print("x : ",x)
                 #print("y : ",y)
                 if (isInCurrentOmega([x,y], currentOmega)):
+                    #print(patch(qExamplar,im, currentOmega)[0].shape)
                     #print("Ancienne valeur de newim[x][y] :", newim[x][y])
                     newim[x][y]=patch(qExamplar,im, currentOmega)[0][i][j]
                     #print("Nouvelle valeur de newim[x][y] :", newim[x][y])
