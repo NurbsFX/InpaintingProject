@@ -17,7 +17,6 @@ import pdb
 #%% SECTION 2 : génération de Ω et δΩ
 
 im = skio.imread('lena.tif')
-newim = im
 height, width = im.shape
 
 # Génération de Ω
@@ -53,9 +52,9 @@ def isOmegaEmpty(omega):
 #%% SECTION 3 : Variables globales, initialisation
 
 omega0 = getOmega(20, 50, 50)
-currentOmega = getOmega(20, 50, 50)
-currentOmegaBarre = oppositeMask(currentOmega)
-currentDeltaOmega = getDeltaOmega(currentOmega)
+#currentOmega = getOmega(20, 50, 50)
+#currentOmegaBarre = oppositeMask(currentOmega)
+#currentDeltaOmega = getDeltaOmega(currentOmega)
 
 
 # CM est la matrice des confidence
@@ -76,19 +75,19 @@ size = 7
 
 # Fonctions de test d'appartenance
 
-def isInOmega(p):
+def isInOmega(p, omega):
     ip = p[0] ; jp = p[1]
-    return (omega0[ip][jp]==1)
+    return (omega[ip][jp]==1)
 
-def isInCurrentOmega(p):
+def isInCurrentOmega(p, currentOmega):
     ip = p[0] ; jp = p[1]
     return (currentOmega[ip][jp]==1)
 
-def isInCurrentOmegaBarre(p):
+def isInCurrentOmegaBarre(p, currentOmegaBarre):
     ip = p[0] ; jp = p[1]
     return (currentOmegaBarre[ip][jp]==1)
 
-def isInCurrentDeltaOmega(p):
+def isInCurrentDeltaOmega(p, currentDeltaOmega):
     ip = p[0] ; jp = p[1]
     return (currentDeltaOmega[ip][jp]==1)
 
@@ -99,7 +98,7 @@ def imSansOmega(im, currentOmega):
 
 # On calcule le patch associé à une position p = [i,j]
 
-def patch(position, im):
+def patch(position, im, currentOmega):
     im2 = imSansOmega(im, currentOmega)
     P = np.zeros((size,size), dtype = float)
     
@@ -131,25 +130,25 @@ def grady(im):
 
 # On définit ici un masque associé à un patch de position p = [i,j]
 
-def maskFromPatch(p):
-    mask = np.zeros((size, size), dtype = int)
+def maskFromPatch(p, omega):
+    mask = np.zeros((size, size), dtype = float)
     
     for i in range(size):
         for j in range(size):
             iabs = p[0]-int(size/2)+i ; jabs = p[1]-int(size/2)+j
             pabs = [iabs, jabs]
-            if (isInCurrentOmega(pabs)== False):
+            if (isInCurrentOmega(pabs, omega)== False):
                 mask[i][j]=1
                 
     return mask
 
 # On calcule la distance entre deux patch définis par leurs position p et q 
 
-def distance(p, q):
+def distance(p, q, omega):
     
-    maskP = maskFromPatch(p)
+    maskP = maskFromPatch(p, omega)
     
-    patchP = patch(p, im) ; patchQ = patch(q, im)
+    patchP = patch(p, im, omega) ; patchQ = patch(q, im, omega)
     
     d = np.multiply(np.multiply(patchP[0]-patchQ[0],patchP[0]-patchQ[0]),maskP)
     s = d.sum()
@@ -159,16 +158,17 @@ def distance(p, q):
 
 #%% SECTION 5 : Algorithme global
 
-def calculConfidence(p):
+def calculConfidence(p, omega):
     
-    print("p: ",p)
-    assert isInCurrentOmega(p)
+    #print("p: ",p)
+    assert isInCurrentOmega(p, omega)
+    omegaBarre = oppositeMask(omega)
     
     ip = p[0] ; jp = p[1]
     for i in range (size):
         for j in range (size) :
             q = [p[0]-int(size/2)+i, p[1]-int(size/2)+j]
-            if (isInCurrentOmegaBarre(q)):
+            if (isInCurrentOmegaBarre(q, omegaBarre)):
                 CM[ip][jp] += CM[q[0]][q[1]]
     CM[ip][jp] = CM[ip][jp]/(float(size*size))
     
@@ -177,18 +177,22 @@ def calculConfidence(p):
 def dataTerm(p):
     return 1
 
-def priority(p):
+def priority(p, omega):
     ip = p[0] ; jp = p[1]
-    CM[ip][jp] = calculConfidence(p)
+    CM[ip][jp] = calculConfidence(p, omega)
     PM[ip][jp] = CM[ip][jp]*dataTerm(p)
     return PM[ip][jp]
 
 def inpainting(im, omega):
     
+    newim = im
+    
     # On définit δΩ à partir du Ω initial
     
-    deltaOmega = getDeltaOmega(omega0) 
-    plt.imshow(deltaOmega),plt.show()
+    currentOmega = omega
+    deltaOmega = getDeltaOmega(omega)
+    
+    #plt.imshow(deltaOmega),plt.show()
     
     # Tant que Ω ≠ ∅, on poursuit l'algorithme :
     
@@ -209,11 +213,13 @@ def inpainting(im, omega):
         for i in range(height):
             for j in range(width):
                 p = [i,j]
-                if (isInCurrentDeltaOmega(p)):
-                    pValue = priority(p)
+                if (isInCurrentDeltaOmega(p, deltaOmega)):
+                    pValue = priority(p, currentOmega)
                     if (pValue > priorityMax):
                         priorityMax = pValue
                         pMax = p
+        
+        print("pMax :", pMax)
         
         # On vérifie que patch de q n'a aucun pixel dans Ω
         
@@ -226,20 +232,25 @@ def inpainting(im, omega):
                 for k in range(size):
                     for l in range(size):
                         x = q[0]-int(size/2)+k ; y = q[1]-int(size/2)+l
-                        if (isInOmega([x,y])):
+                        if (isInOmega([x,y],omega)):
                             boo = False
          
         # Si patchQ n'a aucun pixel dans Ω, on calcule sa distance et 
         # on la compare à dMin                 
          
                 if (boo):
-                    d = distance(pMax, q)
+                    d = distance(pMax, q, currentOmega)
+                    print("d(p,q) :", d)
                     if d < dMin:
                         dMin = d
                         qExamplar = q
                         
         # On copie dans les pixels qui sont dans Ω et patchP
         # la valeur des pixels associés dans patchQ 
+        
+        print("qExamplar : ", qExamplar)
+        print("Value :", im[qExamplar[0],qExamplar[1]] )
+        
         
         for i in range(size):
             for j in range(size):
@@ -248,18 +259,21 @@ def inpainting(im, omega):
                 #print("p1 : ",pMax[1])
                 #print("x : ",x)
                 #print("y : ",y)
-                if (isInCurrentOmega([x,y])):
-                    newim[x][y]=patch(qExamplar,im)[0][i][j]
+                if (isInCurrentOmega([x,y], currentOmega)):
+                    #print("Ancienne valeur de newim[x][y] :", newim[x][y])
+                    newim[x][y]=patch(qExamplar,im, currentOmega)[0][i][j]
+                    #print("Nouvelle valeur de newim[x][y] :", newim[x][y])
+                    #plt.imshow(newim), plt.title("Lena MAJ"), plt.show()
         
         # On met à jour la confidence
         
         for i in range(size):
             for j in range(size):
                 x = pMax[0]-int(size/2)+i ; y = pMax[1]-int(size/2)+j
-                if (isInCurrentOmega([x,y])):
-                    print("x : ",x)
-                    print("y : ",y)
-                    calculConfidence([x,y])
+                if (isInCurrentOmega([x,y], currentOmega)):
+                    #print("x : ",x)
+                    #print("y : ",y)
+                    calculConfidence([x,y], currentOmega)
                     
         # On met à jour currentOmega
         
@@ -271,9 +285,12 @@ def inpainting(im, omega):
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
+        plt.imshow(currentOmega), plt.title("Ω"), plt.show()
         print("Iter")
     
-    return 0
+    imgplot = plt.imshow(newim)
+    plt.show()
+    return newim
 
 inpainting(im, omega0)
 
