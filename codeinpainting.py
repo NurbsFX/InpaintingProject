@@ -69,7 +69,7 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-patchSize = 5
+patchSize = 3
 halfPatchSize = int(patchSize/2)
 
 
@@ -196,6 +196,7 @@ def inpainting(im, omega):
     
     newim = im
     plt.imshow(newim), plt.title("lena originale "), plt.show()
+    compteur = 1
     
     
     # On définit δΩ à partir du Ω initial
@@ -208,6 +209,7 @@ def inpainting(im, omega):
     # Tant que Ω ≠ ∅, on poursuit l'algorithme :
     
     while (not isOmegaEmpty(currentOmega)):
+        
         
         # On vérifie si initialement on a bien δΩ ≠ ∅
         
@@ -299,10 +301,11 @@ def inpainting(im, omega):
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
-        #plt.imshow(newim), plt.title("Image en construction"), plt.show()
+        plt.imshow(newim), plt.title("Image à la boucle {}".format(compteur)), plt.show()
         print("Iter")
+        compteur +=1
     
-    imgplot = plt.imshow(newim), plt.title("lena modifiée")
+    imgplot = plt.imshow(newim), plt.title('lena modifiée avec un pacth de taille {}'.format(patchSize))
     plt.show()
     return 0
 
