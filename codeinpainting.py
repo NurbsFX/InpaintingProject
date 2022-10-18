@@ -69,7 +69,7 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-patchSize = 7
+patchSize = 3
 halfPatchSize = int(patchSize/2)
 
 
