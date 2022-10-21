@@ -16,9 +16,10 @@ import pdb
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('pyramide128.tif')
+im = skio.imread('lena.tif')
+imoriginale = im
 #resized_image = im.resize((64,64))
-height, width = im.shape
+height, width = im.shape[0],im.shape[1]
 
 # Génération de Ω
 
@@ -52,7 +53,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(50, 80, 80)
+omega0 = getOmega(20, 30, 30)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -69,7 +70,7 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-patchSize = 3
+patchSize = 5
 halfPatchSize = int(patchSize/2)
 
 
@@ -137,17 +138,30 @@ def grady(im):
 # On définit ici un masque associé à un patch de position p = [i,j]
 
 def maskFromPatch(p, omega, im):
-    mask = np.zeros((patchSize, patchSize), dtype = float)
-    
-    #mask=im[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
-    #oppositeMaskResized = oppositeMask(omega)[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
-    
-    for i in range(patchSize):
-        for j in range(patchSize):
-            iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
-            pabs = [iabs, jabs]
-            if (isInCurrentOmega(pabs, omega)== False):
-                mask[i][j]=1
+    if (len(im.shape)==2):
+        mask = np.zeros((patchSize, patchSize), dtype = float)
+        
+        #mask=im[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+        #oppositeMaskResized = oppositeMask(omega)[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+        
+        for i in range(patchSize):
+            for j in range(patchSize):
+                iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
+                pabs = [iabs, jabs]
+                if (isInCurrentOmega(pabs, omega)== False):
+                    mask[i][j]=1
+    else:
+        mask = np.zeros((patchSize, patchSize, im.shape[2]), dtype = float)
+        
+        #mask=im[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+        #oppositeMaskResized = oppositeMask(omega)[(p[0]-halfPatchSize):(p[0]+halfPatchSize+1),(p[1]-halfPatchSize):(p[1]+halfPatchSize+1)]
+        
+        for i in range(patchSize):
+            for j in range(patchSize):
+                iabs = p[0]-halfPatchSize+i ; jabs = p[1]-halfPatchSize+j
+                pabs = [iabs, jabs]
+                if (isInCurrentOmega(pabs, omega)== False):
+                    mask[i][j]=1
     
     #maskf= np.multiply(mask, oppositeMaskResized)
                 
@@ -272,7 +286,7 @@ def inpainting(im, omega):
         #plt.imshow(QExamplar), plt.title("Emplacement du patch q à la boucle {}".format(compteur)), plt.show()
         print("dMin : ", dMin)
         print("qExamplar : ", qExamplar)
-        print("Value :", im[qExamplar[0],qExamplar[1]])
+        print("Value :", newim[qExamplar[0],qExamplar[1]])
                    
         # On copie dans les pixels qui sont dans Ω et patchP
         # la valeur des pixels associés dans patchQ 
@@ -323,12 +337,14 @@ def inpainting(im, omega):
     
     imgplot = plt.imshow(newim), plt.title('Image modifiée avec un pacth de taille {}'.format(patchSize))
     plt.show()
-    imgplot = plt.imshow(im), plt.title('Image originale')
+    imgplot = plt.imshow(skio.imread('lena.tif')), plt.title('Image originale')
     plt.show()
     return 0
 
 inpainting(im, omega0)
 
 #imgplot = plt.imshow(newim)
-plt.show()
+#plt.show()
+
+#plt.imshow(grady(im)), plt.show()
 
