@@ -16,7 +16,7 @@ import pdb
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('lena.tif')
+im = skio.imread('pyramide128.tif')
 imoriginale = im
 #resized_image = im.resize((64,64))
 height, width = im.shape[0],im.shape[1]
@@ -53,11 +53,12 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(20, 30, 30)
+omega0 = getOmega(50, 70, 70)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
 
+alpha = 255
 
 # CM est la matrice des confidence
 
@@ -182,6 +183,10 @@ def distance(p, q, omega, im):
     
     return s
 
+def visuPatch(im,p,q):
+    im1=im.copy
+    im1
+
 
 #%% SECTION 5 : Algorithme global
 
@@ -201,18 +206,42 @@ def calculConfidence(p, omega):
     
     return CM[ip][jp]
     
-def dataTerm(p):
-    return 1
+def dataTerm(imgrad,p):
+    
+    
+    grad = [] ; isophote = [] ; normalp = []
+    
+    imgradx = imgrad[0]
+    imgrady = imgrad[1]
 
-def priority(p, omega):
+    pgradx = imgradx[(p[0]-halfPatchSize):(p[0]+halfPatchSize),(p[1]-halfPatchSize):(p[1]+halfPatchSize)]
+    pgrady = imgrady[(p[0]-halfPatchSize):(p[0]+halfPatchSize),(p[1]-halfPatchSize):(p[1]+halfPatchSize)]
+    
+    #print(pgradx)
+    #print(np.max(pgradx))
+
+    grad.append(np.max(pgradx))
+    grad.append(np.max(pgrady))
+    
+    isophote.append(-grad[1])
+    isophote.append(grad[0]) 
+    
+    normalp.append(imgradx[p[0],p[1]])
+    normalp.append(imgrady[p[0],p[1]])
+    
+    d = np.dot(isophote,normalp)/alpha
+    
+    return d
+
+def priority(im, p, omega):
     ip = p[0] ; jp = p[1]
     CM[ip][jp] = calculConfidence(p, omega)
-    PM[ip][jp] = CM[ip][jp]*dataTerm(p)
+    PM[ip][jp] = CM[ip][jp]*dataTerm(im, p)
     return PM[ip][jp]
 
 def inpainting(im, omega):
     
-    newim = im
+    newim = im.copy()
     plt.imshow(newim), plt.title("Image originale "), plt.show()
     compteur = 1
     
@@ -236,6 +265,14 @@ def inpainting(im, omega):
             print("DeltaOmega est vide")
             return 0
         
+        #
+        
+        im2=im.copy()
+        im2[currentOmega>0]=-100000
+        
+        im_grad = np.gradient(im2)
+        
+        
         # On calcule le patch de priorité Max
         
         priorityMax = 0
@@ -245,12 +282,14 @@ def inpainting(im, omega):
             for j in range(width):
                 p = [i,j]
                 if (isInCurrentDeltaOmega(p, deltaOmega)):
-                    pValue = priority(p, currentOmega)
+                    pValue = priority(im_grad, p, currentOmega)
                     if (pValue > priorityMax):
                         priorityMax = pValue
                         pMax = p
         
         print("pMax :", pMax)
+        
+        #
         
         # On vérifie que patch de q n'a aucun pixel dans Ω
         
@@ -328,7 +367,7 @@ def inpainting(im, omega):
         
         deltaOmega = getDeltaOmega(currentOmega)
         plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
-        #plt.imshow(currentOmega), plt.title("Image après la boucle {}".format(compteur)), plt.show()
+        plt.imshow(currentOmega), plt.title("Ω après la boucle {}".format(compteur)), plt.show()
 
         print(" ")
         print("FIN DE LA BOUCLE {}".format(compteur))
@@ -337,7 +376,7 @@ def inpainting(im, omega):
     
     imgplot = plt.imshow(newim), plt.title('Image modifiée avec un pacth de taille {}'.format(patchSize))
     plt.show()
-    imgplot = plt.imshow(skio.imread('lena.tif')), plt.title('Image originale')
+    imgplot = plt.imshow(im), plt.title('Image originale')
     plt.show()
     return 0
 
