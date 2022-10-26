@@ -15,14 +15,20 @@ from scipy import ndimage
 from extended_int import int_inf
 import pdb
 from skimage import color
-
+import cv2
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('lena128.tif')
+im = skio.imread('fleur.tif')
 imoriginale = im
 #resized_image = im.resize((64,64))
 height, width = im.shape[0],im.shape[1]
+
+alpha = 255
+
+if (len(im.shape)==3):
+    alpha = 255*255*255
+
 
 # Génération de Ω
 
@@ -56,7 +62,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(40, 60, 60)
+omega0 = getOmega(120, 150, 150)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -74,7 +80,7 @@ PM = np.zeros((height, width), dtype = float)
 # Taille du patch
 
 # A MODIFIER
-patchSize = 5
+patchSize = 7
 halfPatchSize = int(patchSize/2)
 
 
@@ -216,15 +222,18 @@ def dataTerm(imgrad,p):
     
     imgradx = imgrad[0]
     imgrady = imgrad[1]
+    
+    # On copie les gradients dans le patch choisi
 
     pgradx = imgradx[(p[0]-halfPatchSize):(p[0]+halfPatchSize),(p[1]-halfPatchSize):(p[1]+halfPatchSize)]
     pgrady = imgrady[(p[0]-halfPatchSize):(p[0]+halfPatchSize),(p[1]-halfPatchSize):(p[1]+halfPatchSize)]
-    
-    #print(pgradx)
-    #print(np.max(pgradx))
+
+    # On choisit le gradient de norme max
 
     grad.append(np.max(pgradx))
     grad.append(np.max(pgrady))
+    
+    # On calcule l'isopohote en prenant le vecteur perpendiculaire
     
     isophote.append(-grad[1])
     isophote.append(grad[0]) 
@@ -275,11 +284,13 @@ def inpainting(im, omega):
         if ((deltaOmega == nullMatrix).all()):
             print("DeltaOmega est vide")
             return 0
-        
+       
+
         
         im2=im.copy()
         if(len(im2.shape) == 3):
             im2 = color.rgb2gray(im)
+        
         im2[currentOmega>0]=-10000000
         
         im_grad = np.gradient(im2)
