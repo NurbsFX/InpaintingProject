@@ -12,11 +12,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
 from scipy import ndimage
+from extended_int import int_inf
 import pdb
+from skimage import color
+
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('pyramide128.tif')
+im = skio.imread('lena128.tif')
 imoriginale = im
 #resized_image = im.resize((64,64))
 height, width = im.shape[0],im.shape[1]
@@ -53,7 +56,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(50, 70, 70)
+omega0 = getOmega(40, 60, 60)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -242,7 +245,6 @@ def priority(im, p, omega):
 def inpainting(im, omega):
     
     newim = im.copy()
-    plt.imshow(newim), plt.title("Image originale "), plt.show()
     compteur = 1
     
     
@@ -252,6 +254,15 @@ def inpainting(im, omega):
     deltaOmega = getDeltaOmega(omega)
     
     #plt.imshow(deltaOmega),plt.show()
+    
+    # On colorie les pixels représentant Ω
+    
+    for i in range(height):
+        for j in range(width):
+            if (isInOmega([i,j], omega)):
+                newim[i,j]=0
+    
+    plt.imshow(newim), plt.title("Image originale avec partie manquante "), plt.show()
     
     # Tant que Ω ≠ ∅, on poursuit l'algorithme :
     
@@ -265,10 +276,11 @@ def inpainting(im, omega):
             print("DeltaOmega est vide")
             return 0
         
-        #
         
         im2=im.copy()
-        im2[currentOmega>0]=-100000
+        if(len(im2.shape) == 3):
+            im2 = color.rgb2gray(im)
+        im2[currentOmega>0]=-10000000
         
         im_grad = np.gradient(im2)
         
@@ -288,8 +300,6 @@ def inpainting(im, omega):
                         pMax = p
         
         print("pMax :", pMax)
-        
-        #
         
         # On vérifie que patch de q n'a aucun pixel dans Ω
         
@@ -367,7 +377,7 @@ def inpainting(im, omega):
         
         deltaOmega = getDeltaOmega(currentOmega)
         plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
-        plt.imshow(currentOmega), plt.title("Ω après la boucle {}".format(compteur)), plt.show()
+        #plt.imshow(currentOmega), plt.title("Ω après la boucle {}".format(compteur)), plt.show()
 
         print(" ")
         print("FIN DE LA BOUCLE {}".format(compteur))
