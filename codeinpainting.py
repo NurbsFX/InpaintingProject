@@ -11,6 +11,7 @@ Created on Thu Sep 29 15:04:32 2022
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io as skio
+from skimage.io import imsave
 from scipy import ndimage
 from extended_int import int_inf
 import pdb
@@ -19,7 +20,7 @@ import cv2
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('fleur.tif')
+im = skio.imread('/Users/brunokalfa/Documents/GitHub/InpaintingProject/bridge.tif')
 imoriginale = im
 #resized_image = im.resize((64,64))
 height, width = im.shape[0],im.shape[1]
@@ -62,7 +63,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(120, 150, 150)
+omega0 = getOmega(45, 55, 55)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -387,8 +388,16 @@ def inpainting(im, omega):
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
-        plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
+        #plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
+        imsave('resultat.png', newim)
+        imgfirst = Image.open('/Users/brunokalfa/Documents/GitHub/InpaintingProject/resultat.png')
+        imgfirst = imgfirst.resize((450,350))
+        img = ImageTk.PhotoImage(imgfirst)
+        label['image']=img
+        label.image = img
+        window.after(1000)
         #plt.imshow(currentOmega), plt.title("Ω après la boucle {}".format(compteur)), plt.show()
+
 
         print(" ")
         print("FIN DE LA BOUCLE {}".format(compteur))
@@ -399,12 +408,98 @@ def inpainting(im, omega):
     plt.show()
     imgplot = plt.imshow(im), plt.title('Image originale')
     plt.show()
+    
+    
+    
     return 0
 
-inpainting(im, omega0)
+#inpainting(im, omega0)
 
 #imgplot = plt.imshow(newim)
 #plt.show()
 
 #plt.imshow(grady(im)), plt.show()
 
+
+#%% SECTION 6 : Interface Graphique
+
+from tkinter import *
+from tkinter import filedialog
+from PIL import ImageTk, Image
+
+# Création de la fenêtre
+
+window = Tk()
+
+# Personnalisation de la fenêtre
+
+window.title("Inpainting Project")
+window.geometry("900x900")
+
+# Fonction pour augmenter ou décroitre le bouton sizePatch
+
+def increase():
+    value = int(lbl_value["text"])
+    lbl_value["text"] = f"{value + 1}"
+    
+def decrease():
+    value = int(lbl_value["text"])
+    if value>1:
+        lbl_value["text"] = f"{value - 1}"
+        
+def setSizePatch(n):
+    global patchSize 
+    patchSize = n
+
+# Boutons pour augmenter ou décroître la valeur du Patch
+
+textSizePatch = Label(window, text="Taille du patch :").grid(row=0, column=0)
+
+btn_decrease = Button(master=window, text="-", command=lambda: [decrease(), setSizePatch(int(lbl_value["text"])),print(patchSize)])
+btn_decrease.grid(row=0, column=1, sticky="nsew")
+
+lbl_value = Label(master=window, text="3")
+lbl_value.grid(row=0, column=2)
+
+btn_increase = Button(master=window, text="+", command=lambda: [increase(), setSizePatch(int(lbl_value["text"])), print(patchSize)])
+btn_increase.grid(row=0, column=3, sticky="nsew")
+
+# Boutons pour charger une image
+
+def setImage(filepath):
+    global im
+    im = skio.imread(filepath)
+    imgfirst = Image.open(filepath)
+    imgfirst = imgfirst.resize((450,350))
+    img = ImageTk.PhotoImage(imgfirst)
+    label['image']=img
+    label.image = img
+    
+
+def openFile():
+    filepath = filedialog.askopenfilename()
+    print(filepath)
+    setImage(filepath)
+
+loadButton = Button(text="Choisir une image", command = openFile)
+loadButton.grid(row=1, column=0, sticky="nsew")
+
+img = ImageTk.PhotoImage(Image.open("/Users/brunokalfa/Documents/GitHub/InpaintingProject/brain.tif"))
+label = Label(window, image = img)
+label.image = img
+label.grid(row=5)
+
+# Définir la taille de Ω
+
+btn_increase = Button(master=window, text="+", command=lambda: [increase(), setSizePatch(int(lbl_value["text"])), print(patchSize)])
+btn_increase.grid(row=0, column=3, sticky="nsew")
+
+# Lancer l'algorithme
+
+launchButton = Button(text="Lancer l'algorithme", command = lambda: [inpainting(im, omega0)])
+launchButton.grid(row=9, column=0, sticky="nsew")
+
+# Affichage de la fenêtre
+
+
+window.mainloop()
