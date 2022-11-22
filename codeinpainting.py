@@ -20,7 +20,7 @@ import cv2
 
 #%% SECTION 2 : génération de Ω et δΩ
 
-im = skio.imread('/Users/brunokalfa/Documents/GitHub/InpaintingProject/bridge.tif')
+im = skio.imread('/Users/brunokalfa/Documents/GitHub/InpaintingProject/pyramide128.tif')
 imoriginale = im
 #resized_image = im.resize((64,64))
 height, width = im.shape[0],im.shape[1]
@@ -63,7 +63,7 @@ def isOmegaEmpty(omega):
 
 #%% SECTION 3 : Variables globales, initialisation
 
-omega0 = getOmega(45, 55, 55)
+omega0 = getOmega(60, 75, 75)
 #currentOmega = getOmega(20, 50, 50)
 #currentOmegaBarre = oppositeMask(currentOmega)
 #currentDeltaOmega = getDeltaOmega(currentOmega)
@@ -185,6 +185,7 @@ def distance(p, q, omega, im):
     maskP = maskFromPatch(p, omega, im)
     
     patchP = patch(p, im, omega) ; patchQ = patch(q, im, omega)
+    
     #print("patchP[0] :", patchP[0])
     #print("patchQ[0] :", patchQ[0])
     
@@ -192,6 +193,8 @@ def distance(p, q, omega, im):
     s = d.sum()
     
     return s
+
+
 
 def visuPatch(im,p,q):
     im1=im.copy
@@ -231,8 +234,8 @@ def dataTerm(imgrad,p):
 
     # On choisit le gradient de norme max
 
-    grad.append(np.max(pgradx))
-    grad.append(np.max(pgrady))
+    grad.append(np.max(pgradx[pgradx.any()> -256 and pgradx.any()<256]))
+    grad.append(np.max(pgrady[pgrady.any()> -256 and pgrady.any()<256]))
     
     # On calcule l'isopohote en prenant le vecteur perpendiculaire
     
@@ -249,7 +252,8 @@ def dataTerm(imgrad,p):
 def priority(im, p, omega):
     ip = p[0] ; jp = p[1]
     CM[ip][jp] = calculConfidence(p, omega)
-    PM[ip][jp] = CM[ip][jp]*dataTerm(im, p)
+    PM[ip][jp] = CM[ip][jp]*1
+    #PM[ip][jp] = CM[ip][jp]*dataTerm(im, p)
     return PM[ip][jp]
 
 def inpainting(im, omega):
@@ -388,14 +392,16 @@ def inpainting(im, omega):
         # On met à jour δΩ à la fin de la boucle
         
         deltaOmega = getDeltaOmega(currentOmega)
-        #plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
-        imsave('resultat.png', newim)
-        imgfirst = Image.open('/Users/brunokalfa/Documents/GitHub/InpaintingProject/resultat.png')
-        imgfirst = imgfirst.resize((450,350))
-        img = ImageTk.PhotoImage(imgfirst)
-        label['image']=img
-        label.image = img
-        window.after(1000)
+        plt.imshow(newim), plt.title("Image après la boucle {}".format(compteur)), plt.show()
+        # imsave('resultat.png', newim)
+        # imgfirst = Image.open('/Users/brunokalfa/Documents/GitHub/InpaintingProject/resultat.png')
+        # imgfirst = imgfirst.resize((450,350))
+        # img = ImageTk.PhotoImage(imgfirst)
+        # label['image']=img
+        # label.image = img
+        # plt.gca().imshow(imgfirst)
+        # plt.show()
+        # window.after(1000)
         #plt.imshow(currentOmega), plt.title("Ω après la boucle {}".format(compteur)), plt.show()
 
 
@@ -413,7 +419,7 @@ def inpainting(im, omega):
     
     return 0
 
-#inpainting(im, omega0)
+inpainting(im, omega0)
 
 #imgplot = plt.imshow(newim)
 #plt.show()
@@ -423,83 +429,83 @@ def inpainting(im, omega):
 
 #%% SECTION 6 : Interface Graphique
 
-from tkinter import *
-from tkinter import filedialog
-from PIL import ImageTk, Image
+# from tkinter import *
+# from tkinter import filedialog
+# from PIL import ImageTk, Image
 
-# Création de la fenêtre
+# # Création de la fenêtre
 
-window = Tk()
+# window = Tk()
 
-# Personnalisation de la fenêtre
+# # Personnalisation de la fenêtre
 
-window.title("Inpainting Project")
-window.geometry("900x900")
+# window.title("Inpainting Project")
+# window.geometry("900x900")
 
-# Fonction pour augmenter ou décroitre le bouton sizePatch
+# # Fonction pour augmenter ou décroitre le bouton sizePatch
 
-def increase():
-    value = int(lbl_value["text"])
-    lbl_value["text"] = f"{value + 1}"
+# def increase():
+#     value = int(lbl_value["text"])
+#     lbl_value["text"] = f"{value + 1}"
     
-def decrease():
-    value = int(lbl_value["text"])
-    if value>1:
-        lbl_value["text"] = f"{value - 1}"
+# def decrease():
+#     value = int(lbl_value["text"])
+#     if value>1:
+#         lbl_value["text"] = f"{value - 1}"
         
-def setSizePatch(n):
-    global patchSize 
-    patchSize = n
+# def setSizePatch(n):
+#     global patchSize 
+#     patchSize = n
 
-# Boutons pour augmenter ou décroître la valeur du Patch
+# # Boutons pour augmenter ou décroître la valeur du Patch
 
-textSizePatch = Label(window, text="Taille du patch :").grid(row=0, column=0)
+# textSizePatch = Label(window, text="Taille du patch :").grid(row=0, column=0)
 
-btn_decrease = Button(master=window, text="-", command=lambda: [decrease(), setSizePatch(int(lbl_value["text"])),print(patchSize)])
-btn_decrease.grid(row=0, column=1, sticky="nsew")
+# btn_decrease = Button(master=window, text="-", command=lambda: [decrease(), setSizePatch(int(lbl_value["text"])),print(patchSize)])
+# btn_decrease.grid(row=0, column=1, sticky="nsew")
 
-lbl_value = Label(master=window, text="3")
-lbl_value.grid(row=0, column=2)
+# lbl_value = Label(master=window, text="3")
+# lbl_value.grid(row=0, column=2)
 
-btn_increase = Button(master=window, text="+", command=lambda: [increase(), setSizePatch(int(lbl_value["text"])), print(patchSize)])
-btn_increase.grid(row=0, column=3, sticky="nsew")
+# btn_increase = Button(master=window, text="+", command=lambda: [increase(), setSizePatch(int(lbl_value["text"])), print(patchSize)])
+# btn_increase.grid(row=0, column=3, sticky="nsew")
 
-# Boutons pour charger une image
+# # Boutons pour charger une image
 
-def setImage(filepath):
-    global im
-    im = skio.imread(filepath)
-    imgfirst = Image.open(filepath)
-    imgfirst = imgfirst.resize((450,350))
-    img = ImageTk.PhotoImage(imgfirst)
-    label['image']=img
-    label.image = img
+# def setImage(filepath):
+#     global im
+#     im = skio.imread(filepath)
+#     imgfirst = Image.open(filepath)
+#     imgfirst = imgfirst.resize((450,350))
+#     img = ImageTk.PhotoImage(imgfirst)
+#     label['image']=img
+#     label.image = img
     
 
-def openFile():
-    filepath = filedialog.askopenfilename()
-    print(filepath)
-    setImage(filepath)
+# def openFile():
+#     filepath = filedialog.askopenfilename()
+#     print(filepath)
+#     setImage(filepath)
 
-loadButton = Button(text="Choisir une image", command = openFile)
-loadButton.grid(row=1, column=0, sticky="nsew")
+# loadButton = Button(text="Choisir une image", command = openFile)
+# loadButton.grid(row=1, column=0, sticky="nsew")
 
-img = ImageTk.PhotoImage(Image.open("/Users/brunokalfa/Documents/GitHub/InpaintingProject/brain.tif"))
-label = Label(window, image = img)
-label.image = img
-label.grid(row=5)
+# img = ImageTk.PhotoImage(Image.open("/Users/brunokalfa/Documents/GitHub/InpaintingProject/brain.tif"))
+# label = Label(window, image = img)
+# label.image = img
+# label.grid(row=5)
 
-# Définir la taille de Ω
+# # Définir la taille de Ω
 
-btn_increase = Button(master=window, text="+", command=lambda: [increase(), setSizePatch(int(lbl_value["text"])), print(patchSize)])
-btn_increase.grid(row=0, column=3, sticky="nsew")
+# btn_increase = Button(master=window, text="+", command=lambda: [increase(), setSizePatch(int(lbl_value["text"])), print(patchSize)])
+# btn_increase.grid(row=0, column=3, sticky="nsew")
 
-# Lancer l'algorithme
+# # Lancer l'algorithme
 
-launchButton = Button(text="Lancer l'algorithme", command = lambda: [inpainting(im, omega0)])
-launchButton.grid(row=9, column=0, sticky="nsew")
+# launchButton = Button(text="Lancer l'algorithme", command = lambda: [inpainting(im, omega0)])
+# launchButton.grid(row=9, column=0, sticky="nsew")
 
-# Affichage de la fenêtre
+# # Affichage de la fenêtre
 
 
-window.mainloop()
+# window.mainloop()
